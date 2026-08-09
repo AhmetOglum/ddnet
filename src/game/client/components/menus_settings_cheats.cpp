@@ -12,8 +12,7 @@ void CMenus::RenderCheats(CUIRect MainView)
 	MainView.HSplitTop(20.0f, 0, &MainView);
 
 	MainView.HSplitTop(20.0f, &MainView, 0);
-	static CButtonContainer s_SensitivityScroll;
-	Ui()->DoScrollbarOption(&s_SensitivityScroll, &g_Config.m_ClAimbotSensitivity, &MainView, Localize("Sensitivity"), 1, 360);
+	Ui()->DoScrollbarOption(&g_Config.m_ClAimbotSensitivity, &g_Config.m_ClAimbotSensitivity, &MainView, Localize("Sensitivity"), 1, 360);
 	MainView.HSplitTop(20.0f, 0, &MainView);
 
 	CUIRect Left, Right;
