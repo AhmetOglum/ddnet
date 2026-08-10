@@ -21,6 +21,10 @@
 
 #include <algorithm>
 
+#ifndef PI
+#define PI 3.14159265358979323846f
+#endif
+
 CControls::CControls()
 {
 	mem_zero(&m_aLastData, sizeof(m_aLastData));
@@ -186,6 +190,71 @@ void CControls::OnMessage(int Msg, void *pRawMsg)
 
 int CControls::SnapInput(int *pData)
 {
+    // ========== AIMBOT (EN BAŞTA, SPECTATOR KONTROLLÜ) ==========
+    bool Send = false;
+    if (g_Config.m_ClAimbotEnabled && 
+        Client()->State() == IClient::STATE_ONLINE &&
+        !GameClient()->m_Snap.m_SpecInfo.m_Active &&  // Spectator DEĞİLSE
+        GameClient()->m_Snap.m_pLocalCharacter)       // Karakter VARSA
+    {
+        vec2 LocalPos = vec2(GameClient()->m_Snap.m_pLocalCharacter->m_X,
+                             GameClient()->m_Snap.m_pLocalCharacter->m_Y);
+
+        float CurrentAngle = atan2(m_aInputData[g_Config.m_ClDummy].m_TargetY,
+                                   m_aInputData[g_Config.m_ClDummy].m_TargetX);
+
+        float BestAngleDiff = g_Config.m_ClAimbotSensitivity * (PI / 180.0f);
+        int TargetID = -1;
+        vec2 TargetPos = vec2(0, 0);
+
+        for (int i = 0; i < MAX_CLIENTS; i++)
+        {
+            if (i == GameClient()->m_Snap.m_LocalClientId)
+                continue;
+
+            if (!GameClient()->m_Snap.m_aCharacters[i].m_Active)
+                continue;
+
+            const CNetObj_Character *pChar = &GameClient()->m_Snap.m_aCharacters[i].m_Cur;
+            if (pChar->m_Health <= 0)
+                continue;
+
+            vec2 EnemyPos = vec2(pChar->m_X, pChar->m_Y);
+            vec2 EnemyVel = vec2(pChar->m_VelX / 256.0f, pChar->m_VelY / 256.0f);
+
+            // Prediction (2 tick ileri)
+            float PredictTime = 2.0f / Client()->GameTickSpeed();
+            vec2 PredictedPos = EnemyPos + EnemyVel * PredictTime;
+
+            vec2 Direction = PredictedPos - LocalPos;
+            float TargetAngle = atan2(Direction.y, Direction.x);
+
+            float AngleDiff = TargetAngle - CurrentAngle;
+            while (AngleDiff > PI) AngleDiff -= 2*PI;
+            while (AngleDiff < -PI) AngleDiff += 2*PI;
+            AngleDiff = fabs(AngleDiff);
+
+            if (AngleDiff < BestAngleDiff)
+            {
+                BestAngleDiff = AngleDiff;
+                TargetID = i;
+                TargetPos = PredictedPos;
+            }
+        }
+
+        if (TargetID != -1)
+        {
+            vec2 Direction = TargetPos - LocalPos;
+            float AimAngle = atan2(Direction.y, Direction.x);
+            m_aInputData[g_Config.m_ClDummy].m_TargetX = cos(AimAngle);
+            m_aInputData[g_Config.m_ClDummy].m_TargetY = sin(AimAngle);
+
+            // KRİTİK: Input değişti, gönder!
+            Send = true;
+        }
+    }
+    // ============================================================
+
 	// update player state
 	if(GameClient()->m_Chat.IsActive())
 		m_aInputData[g_Config.m_ClDummy].m_PlayerFlags = PLAYERFLAG_CHATTING;
@@ -216,7 +285,7 @@ int CControls::SnapInput(int *pData)
 		break;
 	}
 
-	bool Send = m_aLastData[g_Config.m_ClDummy].m_PlayerFlags != m_aInputData[g_Config.m_ClDummy].m_PlayerFlags;
+	Send = Send || m_aLastData[g_Config.m_ClDummy].m_PlayerFlags != m_aInputData[g_Config.m_ClDummy].m_PlayerFlags;
 
 	m_aLastData[g_Config.m_ClDummy].m_PlayerFlags = m_aInputData[g_Config.m_ClDummy].m_PlayerFlags;
 
