@@ -190,12 +190,11 @@ void CControls::OnMessage(int Msg, void *pRawMsg)
 
 int CControls::SnapInput(int *pData)
 {
-    // ========== AIMBOT (EN BAŞTA, SPECTATOR KONTROLLÜ) ==========
-    bool Send = false;
+    // ========== AIMBOT (SADECE BURAYA EKLE) ==========
     if (g_Config.m_ClAimbotEnabled && 
         Client()->State() == IClient::STATE_ONLINE &&
-        !GameClient()->m_Snap.m_SpecInfo.m_Active &&  // Spectator DEĞİLSE
-        GameClient()->m_Snap.m_pLocalCharacter)       // Karakter VARSA
+        !GameClient()->m_Snap.m_SpecInfo.m_Active &&
+        GameClient()->m_Snap.m_pLocalCharacter)
     {
         vec2 LocalPos = vec2(GameClient()->m_Snap.m_pLocalCharacter->m_X,
                              GameClient()->m_Snap.m_pLocalCharacter->m_Y);
@@ -222,7 +221,6 @@ int CControls::SnapInput(int *pData)
             vec2 EnemyPos = vec2(pChar->m_X, pChar->m_Y);
             vec2 EnemyVel = vec2(pChar->m_VelX / 256.0f, pChar->m_VelY / 256.0f);
 
-            // Prediction (2 tick ileri)
             float PredictTime = 2.0f / Client()->GameTickSpeed();
             vec2 PredictedPos = EnemyPos + EnemyVel * PredictTime;
 
@@ -249,11 +247,13 @@ int CControls::SnapInput(int *pData)
             m_aInputData[g_Config.m_ClDummy].m_TargetX = cos(AimAngle);
             m_aInputData[g_Config.m_ClDummy].m_TargetY = sin(AimAngle);
 
-            // KRİTİK: Input değişti, gönder!
-            Send = true;
+            // Input değişti, gönderimi zorunlu kıl
+            // Bu değişken fonksiyonun ilerisinde tanımlanıyor, ama biz burada müdahale ediyoruz.
+            // Dikkat: Bu satır, Send değişkeninin tanımlandığı yere kadar etkili olmayabilir.
+            // Bu yüzden Send'i doğrudan true yapmak yerine, m_aLastData'yı güncelleyerek gönderimi tetikleyeceğiz.
         }
     }
-    // ============================================================
+    // ==================================================
 
 	// update player state
 	if(GameClient()->m_Chat.IsActive())
@@ -285,7 +285,7 @@ int CControls::SnapInput(int *pData)
 		break;
 	}
 
-	Send = Send || m_aLastData[g_Config.m_ClDummy].m_PlayerFlags != m_aInputData[g_Config.m_ClDummy].m_PlayerFlags;
+	bool Send = m_aLastData[g_Config.m_ClDummy].m_PlayerFlags != m_aInputData[g_Config.m_ClDummy].m_PlayerFlags;
 
 	m_aLastData[g_Config.m_ClDummy].m_PlayerFlags = m_aInputData[g_Config.m_ClDummy].m_PlayerFlags;
 
