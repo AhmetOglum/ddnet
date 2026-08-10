@@ -247,10 +247,8 @@ int CControls::SnapInput(int *pData)
             m_aInputData[g_Config.m_ClDummy].m_TargetX = cos(AimAngle);
             m_aInputData[g_Config.m_ClDummy].m_TargetY = sin(AimAngle);
 
-            // Input değişti, gönderimi zorunlu kıl
-            // Bu değişken fonksiyonun ilerisinde tanımlanıyor, ama biz burada müdahale ediyoruz.
-            // Dikkat: Bu satır, Send değişkeninin tanımlandığı yere kadar etkili olmayabilir.
-            // Bu yüzden Send'i doğrudan true yapmak yerine, m_aLastData'yı güncelleyerek gönderimi tetikleyeceğiz.
+            // ======== KRİTİK DÜZELTME: INPUT DEĞİŞTİ, GÖNDER ========
+            Send = true;
         }
     }
     // ==================================================
