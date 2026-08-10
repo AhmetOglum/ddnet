@@ -223,7 +223,18 @@ int CControls::SnapInput(int *pData)
 	bool Send = m_aLastData[g_Config.m_ClDummy].m_PlayerFlags != m_aInputData[g_Config.m_ClDummy].m_PlayerFlags;
 
 	// ========== AIMBOT ==========
-	if (g_Config.m_ClAimbotEnabled &&
+	// Debug: Aimbot'un aktif olup olmadığını kontrol et
+	if (g_Config.m_ClAimbotEnabled)
+	{
+		dbg_msg("Aimbot", "Aimbot aktif! FOV: %d", g_Config.m_ClAimbotSensitivity);
+	}
+	else
+	{
+		// Eğer aimbot kapalıysa debug mesajı göndermeye gerek yok, ama istersen açabilirsin.
+		// dbg_msg("Aimbot", "Aimbot kapalı");
+	}
+
+	if (g_Config.m_ClAimbotEnabled && 
 	    Client()->State() == IClient::STATE_ONLINE &&
 	    !GameClient()->m_Snap.m_SpecInfo.m_Active &&
 	    GameClient()->m_Snap.m_pLocalCharacter)
@@ -274,15 +285,30 @@ int CControls::SnapInput(int *pData)
 
 		if (TargetID != -1)
 		{
+			dbg_msg("Aimbot", "Hedef bulundu! ID: %d", TargetID);
+
 			vec2 Direction = TargetPos - LocalPos;
 			float AimAngle = atan2(Direction.y, Direction.x);
 			m_aInputData[g_Config.m_ClDummy].m_TargetX = cos(AimAngle);
 			m_aInputData[g_Config.m_ClDummy].m_TargetY = sin(AimAngle);
 
+			// ======== KRİTİK: INPUT DEĞİŞTİ, GÖNDER ========
 			Send = true;
 		}
+		else
+		{
+			// Hedef bulunamadıysa debug mesajı
+			dbg_msg("Aimbot", "Hedef bulunamadı! FOV: %d", g_Config.m_ClAimbotSensitivity);
+		}
 	}
-	// ==============================
+	else if (g_Config.m_ClAimbotEnabled)
+	{
+		// Aimbot aktif ama oyun durumu uygun değil (spectator, offline, karakter yok)
+		dbg_msg("Aimbot", "Aimbot aktif ama uygun değil: Spec=%d, Char=%d", 
+		        GameClient()->m_Snap.m_SpecInfo.m_Active ? 1 : 0,
+		        GameClient()->m_Snap.m_pLocalCharacter ? 1 : 0);
+	}
+	// ==================================================
 
 	m_aLastData[g_Config.m_ClDummy].m_PlayerFlags = m_aInputData[g_Config.m_ClDummy].m_PlayerFlags;
 
