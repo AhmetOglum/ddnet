@@ -1,4 +1,5 @@
 #include "menus.h"
+
 #include <engine/shared/config.h>
 #include <game/client/ui.h>
 #include <game/localization.h>
@@ -13,7 +14,7 @@ void CMenus::RenderCheats(CUIRect MainView)
 
     MainView.HSplitTop(20.0f, &MainView, 0);
     static CButtonContainer s_SensitivityScroll;
-    Ui()->DoScrollbarOption(&s_SensitivityScroll, &g_Config.m_ClAimbotSensitivity, &MainView, Localize("Fov"), 1, 360);
+    Ui()->DoScrollbarOption(&s_SensitivityScroll, &g_Config.m_ClAimbotFov, &MainView, Localize("Fov"), 1, 360);
     MainView.HSplitTop(20.0f, 0, &MainView);
 
     CUIRect Left, Right;
